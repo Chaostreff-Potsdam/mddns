@@ -3,6 +3,9 @@ from django.db import models, IntegrityError
 
 from pypodonasy import pypodonasy
 
+import random
+import string
+
 class BackendIntegrityError(IntegrityError):
 
 	def __init__(self, response=None, exception=None):
@@ -18,11 +21,17 @@ class Zone(models.Model):
 		return self.zone
 
 
+def generate_api_key(keylen=32):
+	available_chars = string.ascii_letters + string.digits
+	return "".join(random.choice(available_chars) for _ in range(keylen))
+
+
+
 class RecordName(models.Model):
 	name = models.CharField(max_length=128)
 	zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
 
-	apikey = models.CharField(max_length=128)
+	apikey = models.CharField(max_length=128, default=generate_api_key)
 
 	owners = models.ManyToManyField(User, related_name="recordnames")
 
@@ -80,7 +89,7 @@ class Record(models.Model):
 from django.db.models import signals
 from django.dispatch import receiver
 
-@receiver(signals.pre_delete)
+@receiver(signals.pre_delete, sender=Record)
 def delete_Record(sender, instance, using, *args, **kwargs):
 	instance.pre_delete()
 
