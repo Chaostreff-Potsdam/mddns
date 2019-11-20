@@ -66,12 +66,8 @@ def validate_name_zone_key(name_s, zone_s, key):
 
 	try:
 		zone = Zone.objects.get(zone=zone_s)
-	except Zone.DoesNotExist:
-		fail()
-
-	try:
 		name = RecordName.objects.get(zone=zone, name=name_s)
-	except RecordName.DoesNotExist:
+	except (Zone.DoesNotExist, RecordName.DoesNotExist):
 		fail()
 
 	if name.apikey != key:
@@ -79,11 +75,13 @@ def validate_name_zone_key(name_s, zone_s, key):
 
 	return name
 
+
 def getRecord(name, type):
 	try:
 		return Record.objects.get(name=name, type=type.upper())
 	except Record.DoesNotExist:
 		return Record(name=name, type=type.upper())
+
 
 def trySetRecord(name, type, data):
 	if data is not None:
@@ -93,6 +91,7 @@ def trySetRecord(name, type, data):
 		return True
 	return False
 
+
 def index(request):
 	try:
 		name, zone, key, a, aaaa = read_params(request)
@@ -101,7 +100,10 @@ def index(request):
 		trySetRecord(recordName, "A", a)
 		trySetRecord(recordName, "AAAA", aaaa)
 		
-		return HttpResponse("Updated %s with %r/%r\n" % (recordName, a, aaaa))
+		return HttpResponse("Updated %s a=%s, aaaa=%s\n" % (
+				recordName,
+				a or "unchanged",
+				aaaa or "unchanged"))
 	except MissingOrBrokenFields  as e:
 		return HttpResponse(str(e), status=400)
 	except BackendIntegrityError as e:
