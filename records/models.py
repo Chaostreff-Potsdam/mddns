@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
 from django.db import models, IntegrityError
 
 from pypodonasy import pypodonasy
@@ -28,7 +29,11 @@ def generate_api_key(keylen=32):
 
 
 class RecordName(models.Model):
-	name = models.CharField(max_length=128)
+	validhostname = RegexValidator(r'^([A-Za-z0-9\_]|[A-Za-z0-9\_][A-Za-z0-9\_\-]*[A-Za-z0-9])$',
+			'Names may not start or end with - and may only include alphanums and -.')
+	
+
+	name = models.CharField(max_length=128, validators=[validhostname])
 	zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
 
 	apikey = models.CharField(max_length=128, default=generate_api_key)
@@ -65,6 +70,9 @@ class Record(models.Model):
 			)
 	ttl   = models.PositiveIntegerField(default=300)
 	data  = models.CharField(max_length=128)
+
+	class Meta:
+		unique_together = (("name", "type"), )
 
 	def __str__(self):
 		return "Record(%s, %s, %s)" % (self.name, self.type, self.data)
