@@ -42,6 +42,8 @@ class RecordName(models.Model):
 
 	class Meta:
 		unique_together = (("name", "zone"), )
+		verbose_name = "Hostname"
+		verbose_name_plural = "Hostnames"
 
 	def fullname(self):
 		return ".".join((self.name, self.zone.zone))
