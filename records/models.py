@@ -18,6 +18,8 @@ class BackendIntegrityError(IntegrityError):
 class Zone(models.Model):
 	zone = models.CharField(max_length=128, unique=True)
 
+	allowed_users = models.ManyToManyField(User, related_name="zones")
+
 	def __str__(self):
 		return self.zone
 
@@ -37,6 +39,8 @@ class RecordName(models.Model):
 	zone = models.ForeignKey(Zone, on_delete=models.CASCADE)
 
 	apikey = models.CharField(max_length=128, default=generate_api_key)
+
+	description = models.TextField(max_length=256, blank=True)
 
 	owners = models.ManyToManyField(User, related_name="recordnames")
 
