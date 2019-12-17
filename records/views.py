@@ -3,4 +3,4 @@ from django.shortcuts import render
 
 
 def index(request):
-    return HttpResponse("Ohai")
+    return HttpResponse("Ohai. I've got no API.")
