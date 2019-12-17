@@ -42,7 +42,7 @@ class RecordName(models.Model):
 
 	description = models.TextField(max_length=256, blank=True)
 
-	owners = models.ManyToManyField(User, related_name="recordnames")
+	owners = models.ManyToManyField(User, related_name="recordnames", help_text='You will be added automatically on save.')
 
 	class Meta:
 		unique_together = (("name", "zone"), )

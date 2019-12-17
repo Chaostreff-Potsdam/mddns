@@ -24,6 +24,8 @@ class ZoneAdmin(admin.ModelAdmin):
 @admin.register(RecordName)
 class RecordNameAdmin(admin.ModelAdmin):
 
+	filter_horizontal = ('owners',)
+
 	def get_readonly_fields(self, request, obj=None):
 		if obj is None:
 			return []
@@ -34,6 +36,7 @@ class RecordNameAdmin(admin.ModelAdmin):
 		form = super(RecordNameAdmin, self).get_form(request, obj, **kwargs)
 		if obj is None:
 			form.base_fields['zone'].initial = ZoneAdmin.availableZones(request).first()
+			form.base_fields['owners'].initial = [request.user]
 		return form
 
 	def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
@@ -43,6 +46,13 @@ class RecordNameAdmin(admin.ModelAdmin):
 
 	def get_queryset(self, request):
 		return self.availableNames(request)
+
+	def save_related(self, request, form, formsets, change):
+		super().save_related(request, form, formsets, change)
+		if not (change and request.user.is_superuser):
+			obj = form.instance
+			obj.owners.add(request.user)
+			obj.save()
 
 	@classmethod
 	def availableNames(self, request):
