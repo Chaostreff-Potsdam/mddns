@@ -4,6 +4,7 @@ import collections
 import json
 import requests
 
+from mddns import settings
 
 class ZoneWrap(object):
 
@@ -100,12 +101,4 @@ class PowerDNS(object):
 		return self._patch(self._zoneurl(zone_id), payload)
 
 
-pdns = PowerDNS("http://127.0.0.1:8081",
-		open("key.txt").read().strip())
-
-
-if __name__ == "__main__":
-	d_cccp_org = pdns.zone("d.ccc-p.org.")
-	print(json.dumps(d_cccp_org.asdict()))
-
-
+pdns = PowerDNS(settings.POWERDNS_URL, settings.POWERDNS_KEY)

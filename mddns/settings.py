@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from .config_reader import config
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,10 +21,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'yc=o-e4t2(tprucud*4(392pgs-cj$n+%*_f-7-9jb%#x6r+v2'
+SECRET_KEY = config.get('general', 'SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config.get_bool('general', 'DEBUG', default=False)
 
 ALLOWED_HOSTS = []
 
@@ -70,17 +71,74 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mddns.wsgi.application'
 
+# MDDNS pypodonasy backend
+
+POWERDNS_URL = config.get('mddns', 'POWERDNS_URL')
+POWERDNS_KEY = config.get('mddns', 'POWERDNS_KEY')
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.' + config.get('database', 'DATABASE_ENGINE'),
+        'NAME': config.get('database', 'DATABASE_NAME', True),
+        'USER': config.get('database', 'DATABASE_USER'),
+        'PASSWORD': config.get('database', 'DATABASE_PASSWORD'),
+        'HOST': config.get('database', 'DATABASE_HOST'),
+        'PORT': config.get('database', 'DATABASE_PORT'),
     }
 }
 
+
+# Logging
+
+if config.has_option('logging', 'FILE'):
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'filters': {
+            'require_debug_false': {
+                '()': 'django.utils.log.RequireDebugFalse'
+            },
+            'require_debug_true': {
+                '()': 'django.utils.log.RequireDebugTrue'
+            },
+        },
+        'formatters': {
+            'simple': {
+                'format': '%(levelname)s %(message)s',
+            },
+            'verbose': {
+                'format': "[%(asctime)s] %(levelname)s %(message)s"
+            },
+        },
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'filters': ['require_debug_true'],
+                'class': 'logging.StreamHandler'
+            },
+            'file': {
+                'level': 'INFO',
+                'class': 'logging.FileHandler',
+                'formatter': 'verbose',
+                'filename': config.get('logging', 'FILE'),
+            }
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['file'],
+                'level': 'CRITICAL'
+            },
+            'pt2termin': {
+                'handlers': ['file'],
+                'level': 'DEBUG',
+                'propagate': True,
+                'formatter': 'verbose',
+            },
+        },
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -98,7 +156,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-]
+] if not DEBUG else []
 
 
 # Internationalization
