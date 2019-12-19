@@ -1,8 +1,25 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group, User
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
 
 from .models import *
 
-@admin.register(Zone)
+
+class MDDNSAdminSite(admin.AdminSite):
+
+	site_header = 'My Dynamic DNS'
+	site_title = 'MDDNS'
+	index_title = 'Manage your hosts and records'
+
+
+admin_site = MDDNSAdminSite()
+
+admin_site.register(Group, GroupAdmin)
+admin_site.register(User, UserAdmin)
+
+#-----------------------------------------------------------------------------
+
+@admin.register(Zone, site=admin_site)
 class ZoneAdmin(admin.ModelAdmin):
 
 	def get_readonly_fields(self, request, obj=None):
@@ -21,7 +38,7 @@ class ZoneAdmin(admin.ModelAdmin):
 		return Zone.objects.filter(allowed_users__id__exact=request.user.id).order_by('pk')
 
 
-@admin.register(RecordName)
+@admin.register(RecordName, site=admin_site)
 class RecordNameAdmin(admin.ModelAdmin):
 
 	filter_horizontal = ('owners',)
@@ -61,7 +78,7 @@ class RecordNameAdmin(admin.ModelAdmin):
 		return RecordName.objects.filter(owners__id__exact=request.user.id)
 
 
-@admin.register(Record)
+@admin.register(Record, site=admin_site)
 class RecordAdmin(admin.ModelAdmin):
 
 	def get_readonly_fields(self, request, obj=None):

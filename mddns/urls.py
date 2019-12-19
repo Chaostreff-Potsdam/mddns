@@ -17,8 +17,10 @@ from django.contrib import admin
 from django.urls import include, path, reverse_lazy
 from django.views.generic.base import RedirectView
 
+import records.admin
+
 urlpatterns = [
 	path('', RedirectView.as_view(url=reverse_lazy('admin:index'))),
-	path('admin/', admin.site.urls),
+	path('admin/', records.admin.admin_site.urls),
 	path('records/', include('records.urls')),
 ]
