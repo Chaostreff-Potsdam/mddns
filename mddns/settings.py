@@ -28,6 +28,14 @@ DEBUG = config.get_bool('general', 'DEBUG', default=False)
 
 ALLOWED_HOSTS = []
 
+# Determine MAIN_URL / FORCE_SCRIPT option
+if config.has_option('server', 'HOST'):
+	HOST = config.get('server', 'HOST')
+	ALLOWED_HOSTS = [HOST]
+else:
+	HOST = ''
+	ALLOWED_HOSTS = []
+
 
 # Application definition
 
