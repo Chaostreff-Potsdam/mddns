@@ -64,7 +64,7 @@ ROOT_URLCONF = 'mddns.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -72,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+				'records.context_processors.admin_context',
             ],
         },
     },
@@ -83,6 +84,9 @@ WSGI_APPLICATION = 'mddns.wsgi.application'
 
 POWERDNS_URL = config.get('mddns', 'POWERDNS_URL')
 POWERDNS_KEY = config.get('mddns', 'POWERDNS_KEY')
+
+ADMIN_NAME = config.get('mddns', 'ADMIN_NAME')
+ADMIN_MAIL = config.get('mddns', 'ADMIN_MAIL')
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
