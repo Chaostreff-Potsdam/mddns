@@ -7,6 +7,8 @@ from .models import *
 
 import ipaddress
 
+DELETE_VALUE = "delete"
+
 class MissingOrBrokenFields(Exception):
 	pass
 
@@ -29,6 +31,8 @@ def isOfIp(ip_s, klass):
 
 def testIP(key, querydict, klass, name):
 	if key in querydict:
+		if querydict[key] == DELETE_VALUE:
+			return DELETE_VALUE
 		res = isOfIp(querydict[key], klass)
 		if res is None:
 			raise MissingOrBrokenFields("No valid %s address" % name)
@@ -76,18 +80,23 @@ def validate_name_zone_key(name_s, zone_s, key):
 	return name
 
 
-def getRecord(name, type):
+def getRecord(name, type, donotcreate=False):
 	try:
 		return Record.objects.get(name=name, type=type.upper())
 	except Record.DoesNotExist:
-		return Record(name=name, type=type.upper())
+		if not donotcreate:
+			return Record(name=name, type=type.upper())
 
 
 def trySetRecord(name, type, data):
 	if data is not None:
-		rec = getRecord(name, type)
-		rec.data = data
-		rec.save()
+		rec = getRecord(name, type, data == DELETE_VALUE)
+		if data == DELETE_VALUE:
+			if rec is not None:
+				rec.delete()
+		else:
+			rec.data = data
+			rec.save()
 		return True
 	return False
 
@@ -108,6 +117,4 @@ def index(request):
 		return HttpResponse(str(e), status=400)
 	except BackendIntegrityError as e:
 		return HttpResponse(str(e), status=502)
-
-
 
