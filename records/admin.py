@@ -4,7 +4,6 @@ from django.contrib.auth.admin import GroupAdmin, UserAdmin
 
 from .models import *
 
-
 class MDDNSAdminSite(admin.AdminSite):
 
 	site_header = 'My Dynamic DNS'
@@ -42,12 +41,14 @@ class ZoneAdmin(admin.ModelAdmin):
 class RecordNameAdmin(admin.ModelAdmin):
 
 	filter_horizontal = ('owners',)
+	list_display = ('name', 'zone', 'apikey')
+	search_fields = ('name', 'zone__zone')
 
 	def get_readonly_fields(self, request, obj=None):
 		if obj is None:
 			return []
 		else:
-			return ["zone", "name"]
+			return ["name", "zone"]
 
 	def get_form(self, request, obj=None, **kwargs):
 		form = super(RecordNameAdmin, self).get_form(request, obj, **kwargs)
@@ -80,6 +81,9 @@ class RecordNameAdmin(admin.ModelAdmin):
 
 @admin.register(Record, site=admin_site)
 class RecordAdmin(admin.ModelAdmin):
+
+	list_display = ('name', 'type', 'data', 'ttl')
+	search_fields = ('name__name', 'name__zone__zone')
 
 	def get_readonly_fields(self, request, obj=None):
 		if obj is None:
