@@ -1,7 +1,9 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.http import HttpResponseRedirect
 
+import logging
 from .models import *
 
 class MDDNSAdminSite(admin.AdminSite):
@@ -18,8 +20,32 @@ admin_site.register(User, UserAdmin)
 
 #-----------------------------------------------------------------------------
 
+class InternalModelAdminMixin(object):
+	"""Mixin to catch all errors in the Django Admin and map them to user-visible errors."""
+
+	def backend_integrity_catcher(self, fun, request, *args, **kwargs):
+		try:
+			return fun(request, *args, **kwargs)
+		except BackendIntegrityError as e:
+			# This logic was cribbed from the `change_view()` handling here:
+			# django/contrib/admin/options.py:response_post_save_add()
+			# There might be a simpler way to do this, but it seems to do the job.
+			self.message_user(request, 'Error changing model: %s' % e, level=logging.ERROR)
+			return HttpResponseRedirect(request.path)
+
+	def add_view(self, request, *args, **kwargs):
+		return self.backend_integrity_catcher(super().add_view, request, *args, **kwargs)
+
+	def change_view(self, request, *args, **kwargs):
+		return self.backend_integrity_catcher(super().change_view, request, *args, **kwargs)
+
+	def delete_view(self, request, *args, **kwargs):
+		return self.backend_integrity_catcher(super().delete_view, request, *args, **kwargs)
+
+#-----------------------------------------------------------------------------
+
 @admin.register(Zone, site=admin_site)
-class ZoneAdmin(admin.ModelAdmin):
+class ZoneAdmin(InternalModelAdminMixin, admin.ModelAdmin):
 
 	def get_readonly_fields(self, request, obj=None):
 		if obj is None:
@@ -38,7 +64,7 @@ class ZoneAdmin(admin.ModelAdmin):
 
 
 @admin.register(RecordName, site=admin_site)
-class RecordNameAdmin(admin.ModelAdmin):
+class RecordNameAdmin(InternalModelAdminMixin, admin.ModelAdmin):
 
 	filter_horizontal = ('owners',)
 	list_display = ('name', 'zone', 'apikey')
@@ -80,7 +106,7 @@ class RecordNameAdmin(admin.ModelAdmin):
 
 
 @admin.register(Record, site=admin_site)
-class RecordAdmin(admin.ModelAdmin):
+class RecordAdmin(InternalModelAdminMixin, admin.ModelAdmin):
 
 	list_display = ('name', 'type', 'data', 'ttl')
 	search_fields = ('name__name', 'name__zone__zone')
@@ -101,3 +127,4 @@ class RecordAdmin(admin.ModelAdmin):
 		if request.user.is_superuser:
 			return Record.objects.all()
 		return Record.objects.filter(name__owners__id__exact=request.user.id)
+
