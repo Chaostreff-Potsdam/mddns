@@ -1,5 +1,5 @@
 import os
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -23,7 +23,7 @@ class Config():
 			if config_file is not None and os.path.isfile(config_file):
 				self.config_file = config_file
 				self.is_production = is_production
-				self.config = SafeConfigParser()
+				self.config = ConfigParser()
 				self.config.read([self.config_file], encoding='utf-8')
 				return
 
